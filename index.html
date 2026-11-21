@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'">
+<meta name="referrer" content="no-referrer">
+<title>PlugNeighbour – charge at a neighbour's home</title>
+<style>
+:root{--ink:#102A33;--sea:#0F6B6B;--mint:#E3F1ED;--bolt:#FFC12E;--coral:#E4572E;--card:#fff;--mut:#5B7077;--line:#CFE0DB}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:var(--mint);color:var(--ink)}
+h1,h2,h3{font-family:'Trebuchet MS','Segoe UI',sans-serif;line-height:1.15;margin:.2em 0 .4em}
+h1{font-size:clamp(2rem,5vw,3.4rem)}
+header{display:flex;justify-content:space-between;align-items:center;padding:14px 5vw;background:var(--ink);color:#fff;position:sticky;top:0;z-index:5}
+.logo{font-weight:800;font-size:1.2rem;cursor:pointer}.logo b{color:var(--bolt)}
+nav{display:flex;gap:10px;align-items:center;font-size:.9rem}
+button,.btn{font:inherit;font-weight:700;border:0;border-radius:10px;padding:10px 16px;cursor:pointer;background:var(--bolt);color:var(--ink);text-decoration:none;display:inline-block}
+button.alt,.btn.alt{background:transparent;border:2px solid currentColor;color:inherit}
+button.sm{padding:6px 12px;font-size:.85rem}button.bad{background:var(--coral);color:#fff}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
+main{max-width:1050px;margin:0 auto;padding:24px 5vw 60px}
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:center;min-height:440px}
+.hero p{font-size:1.1rem;max-width:46ch}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.scene{background:#fff;border-radius:24px;padding:10px;border:2px solid var(--line)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+.card h3{margin-top:0}
+.tag{display:inline-block;background:var(--mint);border-radius:99px;padding:2px 10px;font-size:.8rem;margin-right:4px}
+.tag.ok{background:#CDEFD9}.tag.wait{background:#FFE9A8}.tag.no{background:#F9D0C4}
+form{display:grid;gap:10px;max-width:420px}
+label{font-weight:600;font-size:.9rem}
+input,select{font:inherit;width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:#fff}
+.tabs{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap}
+.tabs button{background:#fff;border:2px solid var(--line)}.tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.err{color:var(--coral);font-weight:600;min-height:1.4em}.mut{color:var(--mut);font-size:.9rem}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:12px 0}
+.stat{background:var(--ink);color:#fff;border-radius:14px;padding:14px}.stat b{display:block;font-size:1.6rem;color:var(--bolt)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.code{font:800 1.6rem monospace;letter-spacing:.2em;background:var(--ink);color:var(--bolt);padding:4px 12px;border-radius:8px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;font-size:.9rem}td,th{padding:8px;border-bottom:1px solid var(--line);text-align:left}
+footer{text-align:center;padding:22px 5vw;background:var(--ink);color:#CFE0DB;font-size:.9rem}footer b{color:var(--bolt)}footer button{padding:0;margin-left:8px;background:none;color:var(--bolt);text-decoration:underline;font-size:inherit}
+.about{max-width:720px}.about p{font-size:1.05rem}.about .card{border-left:6px solid var(--bolt)}
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:12px;opacity:0;transition:.3s;pointer-events:none}#toast.show{opacity:1}
+/* animated people + car */
+.wave{transform-origin:62px 92px;animation:wave 1.2s ease-in-out infinite}
+.wave2{transform-origin:62px 92px;animation:wave 1.2s .6s ease-in-out infinite}
+.bob{animation:bob 2.4s ease-in-out infinite}
+.flow{stroke-dasharray:8 8;animation:flow 1s linear infinite}
+.zap{animation:zap 1.1s ease-in-out infinite;transform-origin:center}
+@keyframes wave{50%{transform:rotate(-35deg)}}@keyframes bob{50%{transform:translateY(-5px)}}
+@keyframes flow{to{stroke-dashoffset:-16}}@keyframes zap{50%{transform:scale(1.35);opacity:.7}}
+@media(max-width:760px){.hero{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header><div class="logo" data-a="home">Plug<b>Neighbour</b>⚡</div><nav id="nav"></nav></header>
+<main id="app"></main>
+<footer>Created and Maintained by <b>JRD Group Of Companies</b><button data-a="about">About</button></footer>
+<div id="toast" role="status"></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<g id="person"><circle cx="50" cy="40" r="16" fill="#F2C9A0"/><path d="M34 36a16 16 0 0132 0c-8-6-24-6-32 0z" fill="var(--hair,#2b2b2b)"/>
+<rect x="32" y="58" width="36" height="52" rx="14" fill="var(--shirt)"/><rect x="36" y="108" width="12" height="34" rx="5" fill="#33475B"/><rect x="52" y="108" width="12" height="34" rx="5" fill="#33475B"/>
+<circle cx="45" cy="40" r="2" fill="#222"/><circle cx="56" cy="40" r="2" fill="#222"/><path d="M45 47q5 5 11 0" stroke="#222" fill="none" stroke-width="2"/></g></defs></svg>
+<script>
+'use strict';
+const $=s=>document.querySelector(s), app=$('#app'), COMM=()=>DB().cfg.comm;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+const rnd=n=>hex(crypto.getRandomValues(new Uint8Array(n)));
+const DB=()=>{let d;try{d=JSON.parse(localStorage.pn)}catch(e){}return Object.assign({u:[],c:[],b:[],l:[],rp:[],cfg:{comm:.1}},d&&typeof d==='object'?d:{})};
+const save=d=>localStorage.pn=JSON.stringify(d);
+const log=(d,m)=>{d.l.unshift({t:Date.now(),m});d.l=d.l.slice(0,80)};
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)};
+const inr=n=>'₹'+(+n).toFixed(0);
+// ---- security: PBKDF2 password hashing, session expiry, lockout, role guards ----
+async function hp(pw,salt){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveBits']);
+ return hex(await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:210000,hash:'SHA-256'},k,256))}
+const same=(a,b)=>{let r=a.length^b.length;for(let i=0;i<Math.max(a.length,b.length);i++)r|=(a.charCodeAt(i)||0)^(b.charCodeAt(i)||0);return r===0};
+let S=null;try{S=JSON.parse(sessionStorage.s||'null')}catch(e){}
+const IDLE=15*60e3;
+const touch=()=>{if(S){S.exp=Date.now()+IDLE;sessionStorage.s=JSON.stringify(S)}};
+const me=()=>{if(!S||S.exp<Date.now()){S=null;sessionStorage.removeItem('s');return null}const u=DB().u.find(x=>x.id===S.id&&x.role===S.role&&x.st==='active');if(!u){S=null;return null}return u};
+const guard=r=>{const u=me();return u&&u.role===r?u:null};
+const PRE=[['preadm','admin','Platform Admin','admin@plugneighbour.app','','a1c4e7b09d2f5836','ea3018aa917243ab67a1aab418a837e14399d55f03cf1cde6f30d4c3cefc38e0'],
+ ['demo','host','Demo Host','host@plugneighbour.app','9000000001','b2d5f8c1ae306947','e3363741110db542f38d8791589b3354bf0ff1d4be773863e37a7cc7324be933'],
+ ['predrv','driver','Demo Driver','driver@plugneighbour.app','9000000002','c3e60a9d2bf17458','8dacd165a9c09dbeb88acfddadae246c8f0444ab36a1b0be6b650fd71de71528']];
+function seed(){const d=DB();
+ PRE.forEach(([id,role,name,email,phone,salt,h])=>{const o=d.u.find(x=>x.id===id);if(o){if(!o.pwc)Object.assign(o,{role,name,email,phone,salt,h})}else d.u.push({id,role,name,email,phone,salt,h,st:'active',fails:0,lock:0})});
+ save(d);if(d.c.length)return;
+ [['Anand\'s garage charger','RS Puram',11.0045,76.9537,'Type 2 (AC)',9],['Meena\'s terrace plug','Peelamedu',11.0243,77.0021,'Bharat AC-001',7],['Fast home DC','Saibaba Colony',11.0268,76.9478,'CCS2 (DC)',16]]
+ .forEach((x,i)=>d.c.push({id:'s'+i,hid:'demo',name:x[0],area:x[1],lat:x[2],lng:x[3],type:x[4],price:x[5],ok:true,off:false,r:[5,4]}));save(d)}
+async function auth(role,mode,f){
+ const d=DB(),email=f.email.trim().toLowerCase();
+ if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email))return'Enter a valid email.';
+ if(mode==='reg'){
+  if(!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/.test(f.pw))return'Password needs 10+ characters with upper, lower and a number.';
+  if(role!=='admin'&&!/^[6-9]\d{9}$/.test(f.phone))return'Enter a valid 10-digit mobile number.';
+  if(role==='admin')return'Admin accounts cannot be self-registered.';
+  if(d.u.some(u=>u.email===email&&u.role===role))return'Email already registered.';
+  const salt=rnd(16);d.u.push({id:rnd(6),role,name:f.name.trim().slice(0,40)||'User',email,phone:f.phone||'',salt,h:await hp(f.pw,salt),st:'active',fails:0,lock:0});
+  log(d,'Registered '+role+' '+email);save(d);return null}
+ const u=d.u.find(x=>x.email===email&&x.role===role);
+ if(u&&u.lock>Date.now())return'Too many attempts. Try again in a few minutes.';
+ const ok=u&&same(await hp(f.pw,u.salt),u.h);
+ if(!ok){if(u){u.fails++;if(u.fails>=5){u.lock=Date.now()+5*60e3;u.fails=0;log(d,'Lockout '+email)}save(d)}return'Invalid email or password.'}
+ if(u.st!=='active')return'Account suspended. Contact admin.';
+ u.fails=0;log(d,'Login '+role+' '+email);save(d);S={id:u.id,role,exp:Date.now()+IDLE};sessionStorage.s=JSON.stringify(S);return null}
+// ---- views ----
+let view='home',arole='driver',amode='login',pos=null,flt='',q='',srt='near';
+const people=`<svg viewBox="0 0 420 260" role="img" aria-label="A host waves from a home with a charger while a driver waves from an electric car"><rect width="420" height="260" rx="18" fill="#F4FAF8"/>
+<rect x="10" y="150" width="400" height="6" fill="#CFE0DB"/>
+<g><path d="M20 120l60-40 60 40v32H20z" fill="#fff" stroke="#102A33" stroke-width="3"/><rect x="62" y="110" width="30" height="42" fill="#FFC12E"/><rect x="115" y="122" width="14" height="24" rx="3" fill="#0F6B6B"/><path d="M122 122v-12" stroke="#102A33" stroke-width="3"/></g>
+<g class="bob" style="--shirt:#0F6B6B"><use href="#person" x="130" y="30" width="80" height="115" transform="translate(0,6)"/><g class="wave" style="transform-origin:200px 100px"><rect x="196" y="82" width="9" height="34" rx="4" fill="#F2C9A0" transform="rotate(-30 200 88)"/></g></g>
+<path class="flow" d="M126 134C190 150 250 170 292 140" stroke="#FFC12E" stroke-width="5" fill="none"/>
+<g><rect x="260" y="110" width="140" height="38" rx="16" fill="#E4572E"/><path d="M280 110l18-24h60l22 24z" fill="#E4572E"/><path d="M300 108l12-16h40l14 16z" fill="#DDF3F0"/><circle cx="292" cy="150" r="14" fill="#102A33"/><circle cx="372" cy="150" r="14" fill="#102A33"/><circle cx="292" cy="150" r="5" fill="#ccc"/><circle cx="372" cy="150" r="5" fill="#ccc"/>
+<path class="zap" d="M336 118l-9 14h8l-5 12 14-17h-9l6-9z" fill="#FFC12E"/></g>
+<g style="--shirt:#E4572E" class="bob"><use href="#person" x="318" y="2" width="70" height="100" opacity="0"/></g>
+<text x="40" y="215" font-size="15" font-weight="700" fill="#102A33">Battery low? A neighbour has a plug.</text></svg>`;
+function home(){const wa=`<div class="hero"><div><h1>Out of charge? Plug in at a neighbour's home.</h1><p>Home owners earn from their idle charger. Drivers find a verified host nearby, chat on WhatsApp and charge within minutes.</p>
+<div class="cta"><button data-a="go" data-r="driver">I need a charge</button><button class="alt" data-a="go" data-r="host">I have a charger</button></div>
+<p class="mut">Hosts keep ${100-Math.round(COMM()*100)}% of every session. The platform takes ${Math.round(COMM()*100)}%.</p></div><div class="scene">${people}</div></div>
+<div class="grid"><div class="card"><h3>Verified hosts</h3><p>Every charger is checked by an admin before it goes live.</p></div><div class="card"><h3>Private by design</h3><p>Phone numbers stay hidden until a host accepts your request.</p></div><div class="card"><h3>Handover code</h3><p>A 6-digit code proves the driver arrived. No code, no session.</p></div><div class="card"><h3>Fair split</h3><p>Price is shown per kWh up front. Commission is calculated automatically.</p></div></div>`;return wa}
+function authV(){return`<h2>${{driver:'Driver',host:'Charger host',admin:'Admin'}[arole]} ${amode==='login'?'login':'sign up'}</h2>
+<div class="tabs">${(arole==='admin'?[]:['driver','host']).map(r=>`<button class="${r===arole?'on':''}" data-a="go" data-r="${r}">${r==='host'?'Charger host':r[0].toUpperCase()+r.slice(1)}</button>`).join('')}</div>
+<form id="af" autocomplete="on">${amode==='reg'?'<label>Name<input name="name" maxlength="40" required></label>':''}
+<label>Email<input name="email" type="email" required autocomplete="username"></label>
+${amode==='reg'?'<label>Mobile (10 digits, used for WhatsApp)<input name="phone" inputmode="numeric" maxlength="10" required></label>':''}
+<label>Password<input name="pw" type="password" required autocomplete="${amode==='reg'?'new-password':'current-password'}"></label>
+<div class="err" id="er"></div><button>${amode==='login'?'Log in':'Create account'}</button></form>
+<p>${amode==='login'?(arole==='admin'?'':'<button class="alt sm" data-a="mode" data-m="reg">New here? Sign up</button>'):'<button class="alt sm" data-a="mode" data-m="login">Have an account? Log in</button>'}</p>`}
+const CO2=0.35; // rough net kg CO2 avoided per kWh vs petrol; an assumption, adjust to your own source
+const dist=(a,b,c,d)=>{const r=x=>x*Math.PI/180,k=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;return 12742*Math.asin(Math.sqrt(k))};
+const avg=r=>r.length?(r.reduce((a,b)=>a+b,0)/r.length).toFixed(1):'new';
+const st={requested:['wait','Waiting for host'],accepted:['ok','Accepted'],charging:['ok','Charging'],done:['ok','Completed'],rejected:['no','Declined'],expired:['no','Expired'],cancelled:['no','Cancelled']};
+function bookingCard(b,d,role){const c=d.c.find(x=>x.id===b.cid)||{name:'?'},o=d.u.find(x=>x.id===(role==='driver'?b.hid:b.did))||{name:'?'};
+ let x=`<div class="card"><h3>${esc(c.name)}</h3><span class="tag ${st[b.st][0]}">${st[b.st][1]}</span><span class="tag">${b.kwh} kWh · ${inr(b.amt)}</span><p class="mut">${role==='driver'?'Host':'Driver'}: ${esc(o.name)}</p>`;
+ if(role==='driver'&&['accepted','charging'].includes(b.st)){const msg=encodeURIComponent(`Hi ${o.name}, I booked your charger on PlugNeighbour (ref ${b.id}). I'm on my way.`);
+  x+=`<p>Show this code on arrival:</p><div class="code">${b.code}</div><p><a class="btn" target="_blank" rel="noopener noreferrer" href="https://wa.me/91${esc(o.phone)}?text=${msg}">Chat on WhatsApp</a></p>`}
+ if(role==='driver'&&b.st==='done'){x+=b.rate?`<p>You rated ${'★'.repeat(b.rate)}</p>`:`<div class="row">Rate: ${[1,2,3,4,5].map(n=>`<button class="sm" data-a="rate" data-id="${b.id}" data-n="${n}">${n}★</button>`).join('')}</div>`}
+ if(role==='host'){if(b.st==='requested')x+=`<div class="row"><button class="sm" data-a="acc" data-id="${b.id}">Accept</button><button class="sm bad" data-a="rej" data-id="${b.id}">Decline</button></div>`;
+  if(b.st==='accepted')x+=`<label>Driver's code<input id="cd${b.id}" maxlength="6" inputmode="numeric"></label><button class="sm" data-a="start" data-id="${b.id}">Start charging</button>`;
+  if(b.st==='charging')x+=`<label>Final kWh delivered<input id="kw${b.id}" type="number" min="0.5" max="100" step="0.1" value="${b.kwh}"></label><button class="sm" data-a="fin" data-id="${b.id}">Finish and bill</button>`;
+  if(b.st==='done')x+=`<p>You earn <b>${inr(b.amt-b.fee)}</b> (fee ${inr(b.fee)})</p>`}
+ if(['requested','accepted'].includes(b.st)&&(role==='driver'||b.st==='accepted'))x+=`<p><button class="sm bad" data-a="cxl" data-id="${b.id}">Cancel booking</button></p>`;
+ return x+'</div>'}
+function driverV(u){const d=DB();let cs=d.c.filter(c=>c.ok&&!c.off&&(!flt||c.type===flt)&&(!q||(c.name+' '+c.area).toLowerCase().includes(q.toLowerCase())));
+ cs.forEach(c=>c.km=pos?dist(pos[0],pos[1],c.lat,c.lng):null);const ra=c=>c.r.length?c.r.reduce((a,b)=>a+b,0)/c.r.length:0;cs.sort(srt==='cheap'?(a,b)=>a.price-b.price:srt==='rate'?(a,b)=>ra(b)-ra(a):(a,b)=>pos?a.km-b.km:0);
+ const mine=d.b.filter(b=>b.did===u.id).reverse(),dn=mine.filter(b=>b.st==='done'),kw=dn.reduce((s,b)=>s+b.kwh,0),sp=dn.reduce((s,b)=>s+b.amt,0);
+ return`<h2>Hi ${esc(u.name)}, find a charger</h2><div class="stats"><div class="stat"><b>${dn.length}</b>sessions</div><div class="stat"><b>${inr(sp)}</b>spent</div><div class="stat"><b>${(kw*CO2).toFixed(1)} kg</b>CO₂ avoided (est.)</div></div>
+<div class="row"><input id="q" placeholder="Search name or area" value="${esc(q)}" maxlength="40" style="width:210px" aria-label="Search chargers"><select id="srt" style="width:auto" aria-label="Sort"><option value="near" ${srt==='near'?'selected':''}>Nearest</option><option value="cheap" ${srt==='cheap'?'selected':''}>Cheapest</option><option value="rate" ${srt==='rate'?'selected':''}>Top rated</option></select><button class="sm" data-a="loc">Use my location</button><select id="flt" style="width:auto"><option value="">All plugs</option>${['Type 2 (AC)','Bharat AC-001','CCS2 (DC)'].map(t=>`<option ${t===flt?'selected':''}>${t}</option>`).join('')}</select></div><br>
+<div class="grid">${cs.map(c=>`<div class="card"><h3>${esc(c.name)}</h3><span class="tag">${esc(c.type)}</span><span class="tag">${esc(c.area)}</span><p>${inr(c.price)}/kWh · ★ ${avg(c.r)}${c.km!=null?' · '+c.km.toFixed(1)+' km':''}</p>
+<label>kWh needed<input id="k${c.id}" type="number" min="1" max="100" value="10"></label><br><div class="row"><button class="sm" data-a="book" data-id="${c.id}">Request this charger</button><button class="sm alt" data-a="rep" data-id="${c.id}">Report</button></div></div>`).join('')||'<p>No chargers match yet.</p>'}</div>
+<h2>My bookings</h2><div class="grid">${mine.map(b=>bookingCard(b,d,'driver')).join('')||'<p class="mut">No bookings yet.</p>'}</div>`}
+function hostV(u){const d=DB(),cs=d.c.filter(c=>c.hid===u.id),bs=d.b.filter(b=>b.hid===u.id).reverse(),earn=bs.filter(b=>b.st==='done').reduce((s,b)=>s+b.amt-b.fee,0);
+ return`<h2>Host dashboard</h2><div class="stats"><div class="stat"><b>${inr(earn)}</b>earned</div><div class="stat"><b>${bs.filter(b=>b.st==='done').length}</b>sessions</div><div class="stat"><b>${cs.length}</b>chargers</div></div>
+<h3>Enrol a charger</h3><form id="cf"><label>Name<input name="name" maxlength="40" required></label><label>Area<input name="area" maxlength="40" required></label>
+<label>Plug<select name="type"><option>Type 2 (AC)</option><option>Bharat AC-001</option><option>CCS2 (DC)</option></select></label><label>Price per kWh (₹)<input name="price" type="number" min="1" max="50" required></label>
+<div class="row"><button type="button" class="sm alt" data-a="hloc">Pin my location</button><span class="mut" id="hl">No pin yet</span></div><button>Submit for verification</button></form>
+<h3>My chargers</h3><div class="grid">${cs.map(c=>`<div class="card"><h3>${esc(c.name)}</h3><span class="tag ${c.ok?'ok':'wait'}">${c.ok?'Live':'Awaiting admin'}</span><label>₹ per kWh<input id="pr${c.id}" type="number" min="1" max="50" value="${c.price}"></label><div class="row"><button class="sm" data-a="sp" data-id="${c.id}">Save price</button><button class="sm bad" data-a="dc" data-id="${c.id}">Delete</button></div>${c.ok?`<button class="sm alt" data-a="tog" data-id="${c.id}">${c.off?'Switch on':'Switch off'}</button>`:''}</div>`).join('')}</div>
+<h3>Requests</h3><p><button class="sm alt" data-a="csv">Download earnings (CSV)</button></p><div class="grid">${bs.map(b=>bookingCard(b,d,'host')).join('')||'<p class="mut">None yet.</p>'}</div>`}
+function adminV(){const d=DB(),done=d.b.filter(b=>b.st==='done'),gmv=done.reduce((s,b)=>s+b.amt,0),fee=done.reduce((s,b)=>s+b.fee,0);
+ return`<h2>Admin console</h2><div class="stats"><div class="stat"><b>${inr(fee)}</b>commission</div><div class="stat"><b>${inr(gmv)}</b>total billed</div><div class="stat"><b>${d.u.filter(u=>u.role!=='admin').length}</b>users</div><div class="stat"><b>${d.c.filter(c=>!c.ok).length}</b>to verify</div></div>
+<h3>Commission</h3><form id="cmf" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><input name="pc" type="number" min="0" max="30" step="1" value="${Math.round(d.cfg.comm*100)}" style="width:90px" aria-label="Commission percent"><span>% per session (new bookings only)</span><button>Save</button></form><p><button class="sm alt" data-a="csv">Export completed sessions (CSV)</button></p>
+<h3>Reports (${d.rp.length})</h3><div class="grid">${d.rp.map(r=>{const c=d.c.find(x=>x.id===r.cid);return c?`<div class="card"><h3>${esc(c.name)}</h3><p>${esc(r.why)}</p><p class="mut">by ${esc(r.by)}</p><div class="row"><button class="sm" data-a="rd" data-id="${r.id}">Dismiss</button><button class="sm bad" data-a="rm" data-id="${c.id}">Remove charger</button></div></div>`:''}).join('')||'<p class="mut">No reports.</p>'}</div>
+<h3>Chargers to verify</h3><div class="grid">${d.c.filter(c=>!c.ok).map(c=>`<div class="card"><h3>${esc(c.name)}</h3><p>${esc(c.area)} · ${esc(c.type)} · ${inr(c.price)}/kWh</p><div class="row"><button class="sm" data-a="appr" data-id="${c.id}">Approve</button><button class="sm bad" data-a="del" data-id="${c.id}">Reject</button></div></div>`).join('')||'<p class="mut">All caught up.</p>'}</div>
+<h3>Users</h3><table><tr><th>Name</th><th>Role</th><th>Status</th><th></th></tr>${d.u.filter(u=>u.role!=='admin'&&u.id!=='demo').map(u=>`<tr><td>${esc(u.name)}</td><td>${u.role}</td><td>${u.st}</td><td><button class="sm ${u.st==='active'?'bad':''}" data-a="susp" data-id="${u.id}">${u.st==='active'?'Suspend':'Restore'}</button></td></tr>`).join('')}</table>
+<h3>Audit log</h3><table>${d.l.slice(0,15).map(l=>`<tr><td>${new Date(l.t).toLocaleString()}</td><td>${esc(l.m)}</td></tr>`).join('')}</table>`}
+function aboutV(){return`<div class="about"><h2>About PlugNeighbour</h2><div class="card"><p>PlugNeighbour is <b>created and maintained by JRD Group Of Companies</b>.</p>
+<p>This idea is not ours, and it does not belong to any single person. Ideas are everywhere: in everyday conversations and in the problems people face on the road. At JRD Group Of Companies we collect them, turn them into working prototypes, and keep improving them until they become real and helpful for everyone.</p>
+<p>PlugNeighbour began with one familiar problem: an electric car running out of charge with no public charger nearby. A neighbour with a home charger can help, and earn from it too.</p>
+<p>It is one of the projects we build as part of our company. Thank you for being a part of it.</p></div><p><button data-a="home">Back</button></p></div>`}
+function expire(){const d=DB();let c=0;d.b.forEach(b=>{if(b.st==='requested'&&b.t&&Date.now()-b.t>15*60e3){b.st='expired';c=1}});if(c)save(d)}
+function pwV(){return`<h2>Change password</h2><form id="pf"><label>Current password<input name="cur" type="password" required autocomplete="current-password"></label><label>New password<input name="nw" type="password" required autocomplete="new-password"></label><label>Repeat new password<input name="cf" type="password" required autocomplete="new-password"></label><div class="err" id="er"></div><div class="row"><button>Update password</button><button type="button" class="alt" data-a="home">Cancel</button></div></form>`}
+function render(){expire();const u=me();$('#nav').innerHTML='<button class="sm alt" data-a="about" style="color:#fff">About</button>'+(u?`<span>${esc(u.name)} (${u.role})</span><button class="sm alt" data-a="pw" style="color:#fff">Password</button><button class="sm alt" data-a="out" style="color:#fff">Log out</button>`:'');
+ if(view==='about')app.innerHTML=aboutV();
+ else if(view==='auth'&&!u)app.innerHTML=authV();
+ else if(u){const r=u.role;app.innerHTML=view==='pw'?pwV():r==='driver'?driverV(u):r==='host'?hostV(u):adminV()}
+ else app.innerHTML=home()}
+// ---- actions (all re-check the role server-side style before changing data) ----
+const A={
+ home(){view='home';render()},
+ go(el){arole=el.dataset.r;amode='login';view='auth';render()},
+ mode(el){amode=el.dataset.m;render()},
+ out(){S=null;sessionStorage.removeItem('s');view='home';arole='driver';history.replaceState(null,'',location.pathname);render()},
+ loc(){navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{pos=[p.coords.latitude,p.coords.longitude];render()},()=>toast('Location blocked.')):toast('Not supported.')},
+ hloc(){navigator.geolocation.getCurrentPosition(p=>{window.hp2=[p.coords.latitude,p.coords.longitude];$('#hl').textContent='Pinned ✓'},()=>toast('Location blocked.'))},
+ book(el){const u=guard('driver');if(!u)return;const d=DB(),c=d.c.find(x=>x.id===el.dataset.id);if(!c||!c.ok||c.off)return;
+  const k=Math.min(100,Math.max(1,+$('#k'+c.id).value||0));if(d.b.some(b=>b.did===u.id&&['requested','accepted','charging'].includes(b.st)))return toast('Finish your open booking first.');
+  const amt=Math.round(k*c.price);d.b.push({id:rnd(3),cid:c.id,did:u.id,hid:c.hid,kwh:k,amt,fee:Math.round(amt*COMM()),cm:COMM(),pr:c.price,t:Date.now(),st:'requested',code:String(crypto.getRandomValues(new Uint32Array(1))[0]%900000+100000)});
+  log(d,'Booking by '+u.email);save(d);toast('Request sent.');render()},
+ acc(el){B(el,'host',b=>b.st==='requested'&&(b.st='accepted'))},rej(el){B(el,'host',b=>b.st==='requested'&&(b.st='rejected'))},
+ start(el){B(el,'host',b=>{if(b.st==='accepted'&&same($('#cd'+b.id).value.trim(),b.code))b.st='charging';else toast('Wrong code.')})},
+ fin(el){B(el,'host',b=>{if(b.st!=='charging')return;const k=Math.min(100,Math.max(.5,+$('#kw'+b.id).value||b.kwh)),c=DB().c.find(x=>x.id===b.cid);b.kwh=k;b.amt=Math.round(k*(b.pr??c?.price??1));b.fee=Math.round(b.amt*(b.cm??COMM()));b.dt=Date.now();b.st='done'})},
+ rate(el){const u=guard('driver');if(!u)return;const d=DB(),b=d.b.find(x=>x.id===el.dataset.id&&x.did===u.id&&x.st==='done'&&!x.rate);if(!b)return;b.rate=+el.dataset.n;d.c.find(c=>c.id===b.cid).r.push(b.rate);save(d);render()},
+ about(){view='about';render();scrollTo(0,0)},
+ cxl(el){const u=me();if(!u)return;const d=DB(),b=d.b.find(x=>x.id===el.dataset.id&&(x.did===u.id||x.hid===u.id)&&['requested','accepted'].includes(x.st));if(b){b.st='cancelled';log(d,'Cancelled by '+u.email);save(d);render()}},
+ pw(){if(me()){view='pw';render()}},
+ sp(el){const u=guard('host'),d=DB(),c=d.c.find(x=>x.id===el.dataset.id&&x.hid===u?.id);if(c){c.price=Math.min(50,Math.max(1,+$('#pr'+c.id).value||c.price));log(d,'Price set '+c.name);save(d);toast('Price saved for new bookings.');render()}},
+ dc(el){const u=guard('host'),d=DB(),c=d.c.find(x=>x.id===el.dataset.id&&x.hid===u?.id);if(!c)return;if(d.b.some(b=>b.cid===c.id&&['requested','accepted','charging'].includes(b.st)))return toast('Finish open bookings first.');if(confirm('Delete this charger?')){d.c=d.c.filter(x=>x!==c);save(d);render()}},
+ rep(el){const u=guard('driver');if(!u)return;const w=prompt('What is wrong with this charger? (max 120 characters)');if(!w||!w.trim())return;const d=DB();if(d.rp.some(r=>r.cid===el.dataset.id&&r.by===u.email))return toast('You already reported this one.');d.rp.push({id:rnd(3),cid:el.dataset.id,by:u.email,why:w.trim().slice(0,120)});log(d,'Report by '+u.email);save(d);toast('Report sent to admin.')},
+ rd(el){if(!guard('admin'))return;const d=DB();d.rp=d.rp.filter(r=>r.id!==el.dataset.id);save(d);render()},
+ rm(el){if(!guard('admin'))return;const d=DB(),id=el.dataset.id;d.c=d.c.filter(c=>c.id!==id);d.rp=d.rp.filter(r=>r.cid!==id);d.b.forEach(b=>{if(b.cid===id&&['requested','accepted'].includes(b.st))b.st='cancelled'});log(d,'Removed charger '+id);save(d);render()},
+ csv(){const u=me();if(!u||!['host','admin'].includes(u.role))return;const d=DB(),x=v=>{v=String(v);if(/^[=+\-@\t\r]/.test(v))v="'"+v;return'"'+v.replace(/"/g,'""')+'"'};
+  const rows=[['ref','charger','kWh','amount_inr','commission_inr','host_payout_inr','date']];
+  d.b.filter(b=>b.st==='done'&&(u.role==='admin'||b.hid===u.id)).forEach(b=>rows.push([b.id,(d.c.find(c=>c.id===b.cid)||{}).name||'',b.kwh,b.amt,b.fee,b.amt-b.fee,b.dt?new Date(b.dt).toISOString().slice(0,10):'']));
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.map(r=>r.map(x).join(',')).join('\n')],{type:'text/csv'}));a.download='plugneighbour-sessions.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)},
+ tog(el){const u=guard('host'),d=DB(),c=d.c.find(x=>x.id===el.dataset.id&&x.hid===u?.id);if(c){c.off=!c.off;save(d);render()}},
+ appr(el){const u=guard('admin');if(!u)return;const d=DB(),c=d.c.find(x=>x.id===el.dataset.id);if(c){c.ok=true;log(d,'Approved '+c.name);save(d);render()}},
+ del(el){if(!guard('admin'))return;const d=DB();d.c=d.c.filter(x=>x.id!==el.dataset.id||x.ok);save(d);render()},
+ susp(el){if(!guard('admin'))return;const d=DB(),t=d.u.find(x=>x.id===el.dataset.id&&x.role!=='admin');if(t){t.st=t.st==='active'?'suspended':'active';log(d,t.st+' '+t.email);save(d);render()}}};
+function B(el,role,fn){const u=guard(role);if(!u)return;const d=DB(),b=d.b.find(x=>x.id===el.dataset.id&&x.hid===u.id);if(b){fn(b);save(d);render()}}
+document.addEventListener('click',e=>{const el=e.target.closest('[data-a]');if(!el||!A[el.dataset.a])return;if(S)touch();A[el.dataset.a](el)});
+document.addEventListener('change',e=>{const i=e.target.id;if(i==='flt'){flt=e.target.value;render()}if(i==='q'){q=e.target.value.slice(0,40);render()}if(i==='srt'){srt=e.target.value;render()}});
+document.addEventListener('submit',async e=>{e.preventDefault();const f=Object.fromEntries(new FormData(e.target));
+ if(e.target.id==='af'){const er=await auth(arole,amode==='reg'?'reg':'login',f);if(er){$('#er').textContent=er;return}
+  if(amode==='reg'&&arole!=='admin'||amode==='reg'){amode='login';toast('Account created. Please log in.');render()}else{view='dash';render()}}
+ if(e.target.id==='pf'){const u=me();if(!u)return;const E=m=>$('#er').textContent=m,t=DB().u.find(x=>x.id===u.id);
+  if(!same(await hp(f.cur,t.salt),t.h))return E('Current password is wrong.');
+  if(!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{10,}$/.test(f.nw))return E('New password needs 10+ characters with upper, lower and a number.');
+  if(f.nw!==f.cf)return E('New passwords do not match.');if(f.nw===f.cur)return E('Choose a different password.');
+  const salt=rnd(16),h=await hp(f.nw,salt),d=DB(),t2=d.u.find(x=>x.id===u.id);t2.salt=salt;t2.h=h;t2.pwc=1;log(d,'Password changed '+t2.email);save(d);view='dash';render();toast('Password changed.')}
+ if(e.target.id==='cmf'){if(!guard('admin'))return;const d=DB(),p=Math.min(30,Math.max(0,Math.round(+f.pc||0)));d.cfg.comm=p/100;log(d,'Commission set to '+p+'%');save(d);toast('Commission updated for new bookings.');render()}
+ if(e.target.id==='cf'){const u=guard('host');if(!u)return;if(!window.hp2)return toast('Pin your location first.');const d=DB();
+  d.c.push({id:rnd(4),hid:u.id,name:f.name.trim().slice(0,40),area:f.area.trim().slice(0,40),lat:hp2[0],lng:hp2[1],type:['Type 2 (AC)','Bharat AC-001','CCS2 (DC)'].includes(f.type)?f.type:'Type 2 (AC)',price:Math.min(50,Math.max(1,+f.price)),ok:false,off:false,r:[]});
+  log(d,'Charger submitted by '+u.email);save(d);toast('Sent for admin verification.');render()}});
+setInterval(()=>{if(S&&!me())render()},30000);
+const OPS='#ops-k9x2m7';
+function route(){if(location.hash===OPS&&!me()){arole='admin';amode='login';view='auth'}else if(!me()&&view==='auth'&&arole==='admin'&&location.hash!==OPS){view='home'}render()}
+addEventListener('hashchange',route);
+seed();route();
+</script>
+</body>
+</html>
